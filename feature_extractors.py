@@ -14,7 +14,7 @@ HINTS:
 """
 
 from abc import ABC, abstractmethod
-from typing import Tuple
+from math import ceil, sqrt
 import numpy as np
 import gymnasium as gym
 
@@ -32,11 +32,11 @@ class FeatureExtractor(ABC):
         # (for example, centers for RBF).
         self.n_features = self.num_features()
 
-        obs_low = env.observation_space.low
-        obs_high = env.observation_space.high
-        self.state_bounds = list(zip(obs_low, obs_high))
-        self.position_bounds = (obs_low[0], obs_high[0])
-        self.velocity_bounds = (obs_low[1], obs_high[1])
+        self.obs_low = env.observation_space.low
+        self.obs_high = env.observation_space.high
+        self.state_bounds = list(zip(self.obs_low, self.obs_high))
+        self.position_bounds = (self.obs_low[0], self.obs_high[0])
+        self.velocity_bounds = (self.obs_low[1], self.obs_high[1])
 
     @abstractmethod
     def num_features(self) -> int:
@@ -58,7 +58,12 @@ class FeatureExtractor(ABC):
         This helper clamps out-of-bounds values to the [0,1] interval which
         is useful for grid-based or RBF centers defined in normalized space.
         """
-        raise NotImplementedError("Please implement normalize_state as part of the assignment.")
+        max_value = self.obs_high
+        min_value = self.obs_low
+        state = (state-min_value)/(max_value-min_value)
+        state = np.clip(state, 0, 1)
+        return state
+
 
 
 class RBFFeatureExtractor(FeatureExtractor):
@@ -99,11 +104,28 @@ class RBFFeatureExtractor(FeatureExtractor):
         within the normalized [0,1] coordinates. The first center must be at (0,0) and the last at (1,1).
 
         """
-        raise NotImplementedError("Please implement _create_rbf_centers as part of the assignment.")
+        dimension_center_numbers = ceil(sqrt(self.n_centers))
+        dimension_points = []
+        for center in range(dimension_center_numbers):
+            dimension_points.append(center/(dimension_center_numbers-1))
+
+        dimension_centers = []
+        for i in dimension_points:
+            for j in dimension_points:
+                dimension_centers.append((i,j))
+
+        dimension_centers = np.array(dimension_centers)
+        dimension_centers = dimension_centers[:self.n_centers]
+        self.centers = dimension_centers
+
 
     def extract_features(self, state: np.ndarray) -> np.ndarray:
         """(Student) Compute RBF feature activations for a state.
 
         Returns a 1D numpy array of length `self.n_features`.
         """
-        raise NotImplementedError("Please implement extract_features as part of the assignment.")
+        normalized_state = self.normalize_state(state)
+        centers = self.centers
+        diff = normalized_state - centers
+        dist = np.sum(diff**2,axis=1)
+        return np.exp(-dist/(2*self.sigma**2))

@@ -114,6 +114,8 @@ class RBFFeatureExtractor(FeatureExtractor):
             for j in dimension_points:
                 dimension_centers.append((i,j))
 
+        print(len(dimension_centers))
+
         dimension_centers = np.array(dimension_centers)
         dimension_centers = dimension_centers[:self.n_centers]
         self.centers = dimension_centers

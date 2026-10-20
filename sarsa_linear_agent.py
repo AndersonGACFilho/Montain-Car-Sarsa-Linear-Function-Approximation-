@@ -11,11 +11,14 @@ Tasks for students:
 - Implement a training loop that uses step-based training in `train`.
 - Fill in save/load helpers to persist model weights and feature extractor config.
 """
-
+from math import inf
 from typing import Any, Dict, List, Tuple
 import numpy as np
 import gymnasium as gym
 import pickle
+
+import sys
+
 from feature_extractors import FeatureExtractor
 
 
@@ -110,7 +113,11 @@ class LinearSarsaAgent:
         """
         self.epsilon = max(self.epsilon_min, self.epsilon*self.epsilon_decay)
 
-    def train(self, total_steps: int) -> Tuple[List[float], List[float]]:
+    def train(
+            self,
+            total_steps: int,
+            max_episodes: int = sys.maxsize
+    ) -> Tuple[List[float],List[float]]:
         """Train the agent for a fixed number of environment steps.
 
         Students should implement a step-based loop that:
@@ -118,25 +125,43 @@ class LinearSarsaAgent:
         - performs SARSA updates via `updateQ`
         - decays epsilon at episode ends and records statistics
 
-        Returns two lists: rewards per step and rewards per episode.
+        Args
+            total_steps: number of environment steps
+            max_episodes: maximum number of episodes.
+
+        Returns
+            Tuple[List[float],List[float]]:
+                the list of rewards,
+                The list of accumulated rewards per episode
         """
         rewards_per_step = []
         rewards_per_episode = []
+
         episode_reward = 0
         steps_per_episode = 0
+        episodes = 0
 
         state, _ = self.env.reset()
         action = self.act(state)
 
         for i in range(total_steps):
-            next_state, reward, terminated, truncated, _ = self.env.step(action)
+            next_state, reward, terminated, truncated, _ = (
+                self.env.step(action)
+            )
 
             rewards_per_step.append(reward)
             episode_reward += float(reward)
             steps_per_episode += 1
 
             next_action = self.act(next_state)
-            self.updateQ(state, action, float(reward), next_state, next_action, terminated)
+            self.updateQ(
+                state,
+                action,
+                float(reward),
+                next_state,
+                next_action,
+                terminated
+            )
 
             if truncated or terminated:
                 self.episode_rewards.append(float(episode_reward))
@@ -146,11 +171,15 @@ class LinearSarsaAgent:
 
                 episode_reward = 0
                 steps_per_episode = 0
+                episodes+=1
 
                 self.decay_epsilon()
 
                 next_state, _ = self.env.reset()
                 next_action = self.act(next_state)
+
+            if terminated and episodes >= max_episodes:
+                break
 
             state = next_state
             action = next_action
@@ -186,3 +215,11 @@ class LinearSarsaAgent:
         self.epsilon = model_data.get('epsilon', self.epsilon)
         self.episode_rewards = model_data.get('episode_rewards', [])
         self.episode_lengths = model_data.get('episode_lengths', [])
+
+    def __str__(self) -> str:
+        return (f"SarsaLinearAgent(epsilon={self.epsilon}, episode_rewards={self.episode_rewards}, "
+                f"number_of_episodes={self.episode_lengths.__len__()}"
+                f"max_steps_per_episode={np.max(self.episode_lengths)}"
+                f"min_steps_per_episode={np.min(self.episode_lengths)}"
+                f"mean_steps_per_episode={np.mean(self.episode_lengths)}"
+                f"median_steps_per_episode={np.median(self.episode_lengths)})")

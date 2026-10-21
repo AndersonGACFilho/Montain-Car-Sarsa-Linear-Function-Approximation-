@@ -8,8 +8,9 @@ from typing import Tuple, List
 
 import numpy as np
 import gymnasium as gym
-from sarsa_linear_agent import LinearSarsaAgent
-from feature_extractors import RBFFeatureExtractor
+
+from linear_mountaincar.sarsa_linear_agent import LinearSarsaAgent
+from linear_mountaincar.feature_extractors import RBFFeatureExtractor
 
 
 def run_experiment(
@@ -52,10 +53,11 @@ def run_experiment(
 
     agent = LinearSarsaAgent(
         env=env,
+        seed=seed,
         feature_extractor=feature_extractor,
         learning_rate=learning_rate,
-        epsilon=1.0,
-        epsilon_decay=0.999,
+        epsilon=0.1,
+        epsilon_decay=0.99,
         epsilon_min=0.01,
         discount_factor=1.0
     )
@@ -72,7 +74,7 @@ def run_experiment(
                 max_episodes
             )
         )
-        print(f"Completed demo training: steps={len(step_rewards)}, episodes={len(episode_rewards)}")
+        print(f"Completed training: steps={len(step_rewards)}, episodes={len(episode_rewards)}")
     except NotImplementedError:
         print("agent.train() not implemented: implement train(total_steps) to run the demo.")
     except Exception as e:

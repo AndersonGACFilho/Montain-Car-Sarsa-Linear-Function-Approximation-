@@ -11,15 +11,14 @@ Tasks for students:
 - Implement a training loop that uses step-based training in `train`.
 - Fill in save/load helpers to persist model weights and feature extractor config.
 """
-from math import inf
-from typing import Any, Dict, List, Tuple
+from typing import List, Tuple
 import numpy as np
 import gymnasium as gym
 import pickle
 
 import sys
 
-from feature_extractors import FeatureExtractor
+from .feature_extractors import FeatureExtractor
 
 
 class LinearSarsaAgent:
@@ -33,6 +32,7 @@ class LinearSarsaAgent:
         self,
         env: gym.Env,
         feature_extractor: FeatureExtractor,
+        seed: int = 42,
         learning_rate: float = 0.01,
         epsilon: float = 0.1,
         epsilon_decay: float = 0.995,
@@ -40,6 +40,7 @@ class LinearSarsaAgent:
         discount_factor: float = 1.0,
     ):
         self.env = env
+        self.seed = seed
         self.n_actions = env.action_space.n
         self.feature_extractor = feature_extractor
         self.learning_rate = learning_rate
@@ -55,6 +56,8 @@ class LinearSarsaAgent:
         # Track training statistics
         self.episode_rewards = []
         self.episode_lengths = []
+
+        self.successes = 0
 
     def Q(self, state: np.ndarray, action: int) -> float:
         """Compute linear Q-value for (state,action).
@@ -140,8 +143,9 @@ class LinearSarsaAgent:
         episode_reward = 0
         steps_per_episode = 0
         episodes = 0
+        self.successes = 0
 
-        state, _ = self.env.reset()
+        state, _ = self.env.reset(seed=self.seed)
         action = self.act(state)
 
         for i in range(total_steps):
@@ -173,13 +177,16 @@ class LinearSarsaAgent:
                 steps_per_episode = 0
                 episodes+=1
 
+                if terminated:
+                    self.successes += 1
+                    if self.successes >= max_episodes:
+                        break
+
                 self.decay_epsilon()
 
                 next_state, _ = self.env.reset()
                 next_action = self.act(next_state)
 
-            if terminated and episodes >= max_episodes:
-                break
 
             state = next_state
             action = next_action

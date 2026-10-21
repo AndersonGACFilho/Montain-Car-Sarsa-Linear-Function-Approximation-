@@ -4,11 +4,10 @@ import pytest
 import numpy as np
 import gymnasium as gym
 
+from linear_mountaincar import RBFFeatureExtractor, LinearSarsaAgent
+
 # Make project root importable when running under pytest
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-
-from sarsa_linear_agent import LinearSarsaAgent
-from feature_extractors import RBFFeatureExtractor
 
 
 def test_epsilon_decays_during_train():

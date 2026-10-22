@@ -7,7 +7,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 
-from linear_mountaincar.results import TARGET_SUCCESSES, ConfigSummary
+from linear_mountaincar.results import TARGET_SUCCESSES, ConfigSummary, RunRecord
 
 MAX_EPISODE_LEN = 200
 
@@ -69,12 +69,18 @@ def plot_heatmap(summaries: Sequence[ConfigSummary], path: str) -> None:
     ax.set_title("Mediana de passos e taxa de sucesso por configuração")
     _save(fig, path)
 
-def _cumulative_successes(lengths: List[int], grid: np.ndarray) -> np.ndarray:
-    lengths = np.asarray(lengths)
+def _episode_successes(record: RunRecord) -> np.ndarray:
+    if record.episode_successes is not None:
+        return np.asarray(record.episode_successes, dtype=bool)
+    return np.asarray(record.episode_lengths) < MAX_EPISODE_LEN
+
+
+def _cumulative_successes(record: RunRecord, grid: np.ndarray) -> np.ndarray:
+    lengths = np.asarray(record.episode_lengths)
     if lengths.size == 0:
         return np.zeros_like(grid, dtype=float)
     ends = np.cumsum(lengths)
-    success_ends = ends[lengths < MAX_EPISODE_LEN]
+    success_ends = ends[_episode_successes(record)]
     return np.searchsorted(success_ends, grid, side="right").astype(float)
 
 
@@ -104,7 +110,7 @@ def plot_learning_curves(selected: Sequence[ConfigSummary], path: str,
 
     for s in selected:
         name = s.label.replace("\n", ", ")
-        curves = np.array([_cumulative_successes(r.episode_lengths, grid) for r in s.records])
+        curves = np.array([_cumulative_successes(r, grid) for r in s.records])
         med = np.median(curves, axis=0)
         q1, q3 = np.percentile(curves, [25, 75], axis=0)
         line, = ax1.plot(grid, med, label=name)

@@ -25,6 +25,7 @@ class RunRecord:
     steps_to_success: Optional[int]
     episode_lengths: List[int] = field(default_factory=list)
     episode_rewards: List[float] = field(default_factory=list)
+    episode_successes: Optional[List[bool]] = None
 
     @property
     def run_key(self) -> RunKey:
@@ -57,6 +58,7 @@ class RunRecord:
             steps_to_success=int(steps_used) if solved else None,
             episode_lengths=[int(x) for x in agent.episode_lengths],
             episode_rewards=[float(x) for x in exp.episode_rewards],
+            episode_successes=[bool(x) for x in agent.episode_successes],
         )
 
 

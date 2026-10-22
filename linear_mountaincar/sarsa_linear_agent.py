@@ -49,13 +49,11 @@ class LinearSarsaAgent:
         self.epsilon_min = epsilon_min
         self.discount_factor = discount_factor
 
-        # Students should initialize weights to zeros with shape
-        # (n_actions, feature_extractor.n_features)
         self.weights = np.zeros((self.n_actions, self.feature_extractor.n_features))
 
-        # Track training statistics
         self.episode_rewards = []
         self.episode_lengths = []
+        self.episode_successes = []
 
         self.successes = 0
 
@@ -170,6 +168,7 @@ class LinearSarsaAgent:
             if truncated or terminated:
                 self.episode_rewards.append(float(episode_reward))
                 self.episode_lengths.append(steps_per_episode)
+                self.episode_successes.append(bool(terminated))
 
                 rewards_per_episode.append(episode_reward)
 
@@ -205,6 +204,7 @@ class LinearSarsaAgent:
             'epsilon': self.epsilon,
             'episode_rewards': self.episode_rewards,
             'episode_lengths': self.episode_lengths,
+            'episode_successes': self.episode_successes,
             'feature_extractor_config': {
                 'type': type(self.feature_extractor).__name__,
                 'n_features': self.feature_extractor.n_features,
@@ -222,6 +222,7 @@ class LinearSarsaAgent:
         self.epsilon = model_data.get('epsilon', self.epsilon)
         self.episode_rewards = model_data.get('episode_rewards', [])
         self.episode_lengths = model_data.get('episode_lengths', [])
+        self.episode_successes = model_data.get('episode_successes', [])
 
     def __str__(self) -> str:
         return (f"SarsaLinearAgent(epsilon={self.epsilon}, episode_rewards={self.episode_rewards}, "

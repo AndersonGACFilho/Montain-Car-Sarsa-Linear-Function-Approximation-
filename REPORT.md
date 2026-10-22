@@ -42,9 +42,9 @@ As cinco configurações com menor mediana de passos (critério padrão de `plot
 **Por que essas configurações são interessantes:**
 
 - **Estão todas no canto da grade, em sua maioria, possuem muitos centros.** 
-A melhor é exatamente o extremo (α = 0,1, 49 centros). Isso mostra que o 
-ótimo provavelmente está **fora da região explorada**. A próxima varredura deveria testar mais
-de 49 centros.
+A melhor é exatamente o extremo (α = 0,1, 49 centros). 
+Isso mostra que o ótimo provavelmente está **fora da região explorada**. 
+A próxima varredura deveria testar mais de 49 centros.
 - **Os ganhos estão saturando.** De 36 para 49 centros com α = 0,1, a mediana cai só
 70 passos (≈3%), menos que o desvio padrão entre seeds. 
 As caixas das duas primeiras configurações se sobrepõem bastante
